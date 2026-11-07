@@ -121,6 +121,17 @@ body.touch #constPanel{bottom:236px;max-height:max(170px,calc(100vh - 470px))}
 .crow .ctog:not(.on){opacity:.5}
 .crow .ctog:not(.on) .d{background:transparent!important;border:1px solid currentColor}
 .crow .cloc{min-height:36px;padding:6px 10px;font-size:12px}
+.cgroup{margin-bottom:6px}
+.cg-head{display:flex;gap:6px}
+.cg-head .cg-tog{flex:1;min-width:0;display:flex;align-items:center;gap:8px;text-align:left;min-height:36px;padding:6px 10px;background:rgba(108,198,255,.07);font-weight:700;letter-spacing:1px}
+.cg-head .arrow{display:inline-block;width:10px;transition:transform .15s;font-size:10px;color:var(--muted)}
+.cgroup:not(.collapsed) .arrow{transform:rotate(90deg)}
+.cg-head .hint{font-weight:400;font-size:11px;color:var(--muted);letter-spacing:0}
+.cg-head .cnt{margin-left:auto;font-weight:400;font-size:11px;color:#bfe6ff;letter-spacing:0;flex:none}
+.cg-head .cg-all{flex:none;min-height:36px;padding:6px 9px;font-size:12px}
+.cg-body{margin:5px 0 0 8px;padding-left:8px;border-left:1px solid var(--line)}
+.cgroup.collapsed .cg-body{display:none}
+.tag-ast{flex:none;font-size:10px;padding:1px 6px;border-radius:6px;background:rgba(255,241,168,.16);border:1px solid rgba(255,241,168,.35);color:#fff1a8;letter-spacing:0}
 #constPanel .note{margin-top:8px;color:var(--muted);font-size:11.5px;line-height:1.6}
 #constPanel.master-off .crow{opacity:.45}
 @media (max-width:860px){
@@ -185,7 +196,7 @@ body.touch #constPanel{bottom:236px;max-height:max(170px,calc(100vh - 470px))}
       <button id="constNames" class="on">亮星名</button>
     </div>
     <div id="constList"></div>
-    <div class="note">點星座名稱可單獨顯示／隱藏；「定位」會把視角轉向該星座並點亮它（再按一次取消點亮）。鍵盤 <kbd>C</kbd> 為總開關、<kbd>L</kbd> 開關此清單。</div>
+    <div class="note">點季節標題可展開／收合，「全顯／全隱」切換整組；點星座名稱可單獨顯示／隱藏；虛線的「夏季大三角」是星群（非正式星座）；「定位」會把視角轉向該星座並點亮它（再按一次取消點亮）。鍵盤 <kbd>C</kbd> 為總開關、<kbd>L</kbd> 開關此清單。</div>
   </div>
 
   <div id="info" class="panel interactive hidden"></div>
@@ -210,7 +221,7 @@ body.touch #constPanel{bottom:236px;max-height:max(170px,calc(100vh - 470px))}
       <tr><td><kbd>R</kbd></td><td>返回飛船視角</td></tr>
       <tr><td><kbd>M</kbd></td><td>自由視角／軌道總覽</td></tr>
       <tr><td><kbd>C</kbd></td><td>星座總開關（顯示／隱藏全部星座）</td></tr>
-      <tr><td><kbd>L</kbd></td><td>星座清單：單獨顯示／隱藏、定位點亮</td></tr>
+      <tr><td><kbd>L</kbd></td><td>星座清單（依季節分組）：單獨顯示／隱藏、定位點亮</td></tr>
       <tr><td><kbd>H</kbd> / <kbd>Esc</kbd></td><td>顯示／隱藏說明；關閉資訊面板</td></tr>
       <tr><td>觸控</td><td>拖曳轉向、雙指縮放，按住畫面按鈕推進／加速</td></tr>
     </table>
@@ -562,38 +573,119 @@ function boot(THREE) {
   ];
   // ---------- Constellations (J2000 RA in hours, Dec in degrees, visual magnitude, optional Chinese star name) ----------
   const CONSTELLATIONS = [
-    { id: 'ori', name: '獵戶座', en: 'Orion', color: '#86bbff', tip: '冬季星空的代表，腰帶三星（參宿一、二、三）一字排開',
+    { id: 'ori', season: 'winter', name: '獵戶座', en: 'Orion', color: '#86bbff', tip: '冬季星空的代表，腰帶三星（參宿一、二、三）一字排開',
       stars: [[5.9195, 7.4071, 0.50, '參宿四'], [5.2423, -8.2016, 0.13, '參宿七'], [5.4189, 6.3497, 1.64], [5.5334, -0.2991, 2.23],
         [5.6036, -1.2019, 1.69], [5.6793, -1.9426, 1.77], [5.7959, -9.6696, 2.06], [5.5856, 9.9342, 3.39]],
       lines: [[7, 0], [7, 2], [0, 2], [0, 5], [2, 3], [3, 4], [4, 5], [5, 6], [3, 1]] },
-    { id: 'uma', name: '北斗七星', full: '北斗七星（大熊座）', en: 'Big Dipper', color: '#9fe0c8', tip: '大熊座的一部分；天璇→天樞延長約 5 倍即可找到北極星',
+    { id: 'uma', season: 'spring', name: '北斗七星', full: '北斗七星（大熊座）', en: 'Big Dipper', color: '#9fe0c8', tip: '大熊座的一部分；天璇→天樞延長約 5 倍即可找到北極星',
       stars: [[11.0621, 61.7510, 1.79, '天樞'], [11.0307, 56.3824, 2.37, '天璇'], [11.8972, 53.6948, 2.44, '天璣'], [12.2571, 57.0326, 3.31, '天權'],
         [12.9005, 55.9598, 1.77, '玉衡'], [13.3988, 54.9254, 2.27, '開陽'], [13.7923, 49.3133, 1.86, '搖光']],
       lines: [[0, 1], [1, 2], [2, 3], [3, 0], [3, 4], [4, 5], [5, 6]] },
-    { id: 'cas', name: '仙后座', en: 'Cassiopeia', color: '#f3a6d8', tip: '由五顆亮星排成醒目的 W 形，與北斗七星分居北極星兩側',
+    { id: 'cas', season: 'autumn', name: '仙后座', en: 'Cassiopeia', color: '#f3a6d8', tip: '由五顆亮星排成醒目的 W 形，與北斗七星分居北極星兩側',
       stars: [[0.1530, 59.1498, 2.27], [0.6751, 56.5373, 2.24, '王良四'], [0.9451, 60.7167, 2.47], [1.4303, 60.2353, 2.68], [1.9066, 63.6701, 3.37]],
       lines: [[0, 1], [1, 2], [2, 3], [3, 4]] },
-    { id: 'gem', name: '雙子座', en: 'Gemini', color: '#ffd27a', tip: '黃道星座；北河二、北河三是一對「兄弟星」',
+    { id: 'gem', season: 'winter', name: '雙子座', en: 'Gemini', color: '#ffd27a', tip: '黃道星座；北河二、北河三是一對「兄弟星」',
       stars: [[7.5766, 31.8883, 1.58, '北河二'], [7.7553, 28.0262, 1.14, '北河三'], [6.6285, 16.3993, 1.93], [6.7322, 25.1311, 2.98], [6.3827, 22.5136, 2.87],
         [6.2480, 22.5068, 3.31], [7.3354, 21.9822, 3.53], [7.0685, 20.5703, 3.90], [7.1857, 30.2453, 4.41]],
       lines: [[0, 8], [8, 3], [3, 4], [4, 5], [1, 6], [6, 7], [7, 2], [0, 1], [8, 6]] },
-    { id: 'tau', name: '金牛座', en: 'Taurus', color: '#ffae7a', tip: '黃道星座；橙紅色的畢宿五是牛眼，昴宿星團就在牛背上',
+    { id: 'tau', season: 'winter', name: '金牛座', en: 'Taurus', color: '#ffae7a', tip: '黃道星座；橙紅色的畢宿五是牛眼，昴宿星團就在牛背上',
       stars: [[4.5987, 16.5093, 0.85, '畢宿五'], [5.4382, 28.6075, 1.65, '五車五'], [5.6274, 21.1425, 3.00], [4.3299, 15.6275, 3.65], [4.3823, 17.5425, 3.76],
         [4.4769, 19.1803, 3.53], [4.4777, 15.8708, 3.40], [4.0113, 12.4903, 3.47], [3.7914, 24.1050, 2.87, '昴宿星團'], [3.4136, 9.0289, 3.60]],
       lines: [[1, 5], [5, 4], [4, 3], [2, 0], [0, 6], [6, 3], [3, 7], [7, 9]] },
-    { id: 'leo', name: '獅子座', en: 'Leo', color: '#ffe08a', tip: '黃道星座；頭部的「反問號」又稱獅子的鐮刀',
+    { id: 'leo', season: 'spring', name: '獅子座', en: 'Leo', color: '#ffe08a', tip: '黃道星座；頭部的「反問號」又稱獅子的鐮刀',
       stars: [[10.1395, 11.9672, 1.35, '軒轅十四'], [11.8177, 14.5720, 2.14, '五帝座一'], [10.3329, 19.8415, 2.08], [11.2351, 20.5237, 2.56], [11.2373, 15.4296, 3.33],
         [10.1222, 16.7625, 3.48], [10.2782, 23.4173, 3.43], [9.8794, 26.0070, 3.88], [9.7642, 23.7743, 2.98]],
       lines: [[0, 5], [5, 2], [2, 6], [6, 7], [7, 8], [2, 3], [3, 1], [1, 4], [4, 0], [3, 4]] },
-    { id: 'sco', name: '天蠍座', en: 'Scorpius', color: '#ff8a8a', tip: '黃道星座；紅超巨星心宿二是蠍子的心臟，夏季南方低空可見',
+    { id: 'sco', season: 'summer', name: '天蠍座', en: 'Scorpius', color: '#ff8a8a', tip: '黃道星座；紅超巨星心宿二是蠍子的心臟，夏季南方低空可見',
       stars: [[16.4901, -26.4320, 1.06, '心宿二'], [16.0906, -19.8055, 2.62], [16.0056, -22.6217, 2.29], [15.9809, -26.1141, 2.89], [16.3531, -25.5928, 2.88],
         [16.5980, -28.2161, 2.82], [16.8361, -34.2933, 2.29], [16.8645, -38.0475, 3.00], [16.9097, -42.3613, 3.62], [17.2026, -43.2392, 3.33],
         [17.6220, -42.9978, 1.86], [17.7931, -40.1270, 3.00], [17.7081, -39.0300, 2.39], [17.5601, -37.1038, 1.62, '尾宿八'], [17.5127, -37.2958, 2.70]],
       lines: [[1, 2], [2, 3], [2, 4], [4, 0], [0, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 13], [13, 14]] },
-    { id: 'cyg', name: '天鵝座', en: 'Cygnus', color: '#b8a8ff', tip: '又稱北十字；天津四與織女、牛郎合稱「夏季大三角」',
+    { id: 'cyg', season: 'summer', name: '天鵝座', en: 'Cygnus', color: '#b8a8ff', tip: '又稱北十字；天津四與織女、牛郎合稱「夏季大三角」',
       stars: [[20.6905, 45.2803, 1.25, '天津四'], [20.3705, 40.2567, 2.23], [19.5120, 27.9597, 3.05, '輦道增七'], [20.7702, 33.9703, 2.48], [19.7496, 45.1308, 2.87],
         [21.2156, 30.2270, 3.20], [19.4951, 51.7297, 3.79], [19.9384, 35.0836, 3.89]],
-      lines: [[0, 1], [1, 7], [7, 2], [4, 1], [1, 3], [3, 5], [4, 6]] }
+      lines: [[0, 1], [1, 7], [7, 2], [4, 1], [1, 3], [3, 5], [4, 6]] },
+
+    // ----- spring -----
+    { id: 'vir', season: 'spring', name: '室女座', en: 'Virgo', color: '#a8e6a0', tip: '黃道星座；藍白色的角宿一是春季夜空最亮的星之一',
+      stars: [[13.4199, -11.1613, 0.97, '角宿一'], [12.6943, -1.4494, 2.74], [13.0363, 10.9592, 2.83], [11.8449, 1.7647, 3.61], [12.3318, -0.6667, 3.89],
+        [12.9267, 3.3975, 3.38], [13.5782, -0.5958, 3.37], [13.1658, -5.5389, 4.38], [14.2669, -6.0006, 4.08], [14.7177, -5.6582, 3.88]],
+      lines: [[0, 7], [7, 1], [1, 4], [4, 3], [1, 5], [5, 2], [5, 6], [6, 0], [6, 8], [8, 9]] },
+    { id: 'boo', season: 'spring', name: '牧夫座', en: 'Boötes', color: '#ffc08a', tip: '橙色的大角星是北天最亮的恆星；沿北斗斗柄弧線延伸即可找到',
+      stars: [[14.2610, 19.1825, -0.05, '大角星'], [14.7498, 27.0742, 2.37], [13.9114, 18.3978, 2.68], [14.5346, 38.3083, 3.03], [15.2584, 33.3148, 3.47],
+        [15.0324, 40.3906, 3.50], [14.5305, 30.3714, 3.58], [14.6858, 13.7283, 3.78]],
+      lines: [[0, 1], [1, 4], [4, 5], [5, 3], [3, 6], [6, 0], [0, 2], [0, 7]] },
+
+    // ----- summer -----
+    { id: 'sgr', season: 'summer', name: '人馬座', en: 'Sagittarius', color: '#ffb0c8', tip: '黃道星座；八顆亮星排成「茶壺」，壺嘴正指向銀河中心',
+      stars: [[18.4029, -34.3846, 1.85], [18.9211, -26.2967, 2.05], [19.0435, -29.8804, 2.60], [18.3499, -29.8281, 2.70], [18.4662, -25.4217, 2.81],
+        [18.0968, -30.4241, 2.99], [18.7609, -26.9908, 3.17], [19.1157, -27.6704, 3.32]],
+      lines: [[5, 3], [3, 0], [0, 5], [3, 4], [4, 6], [6, 3], [6, 1], [1, 7], [7, 2], [2, 6], [2, 0]] },
+    { id: 'aql', season: 'summer', name: '天鷹座', en: 'Aquila', color: '#9fd6ff', tip: '牛郎星（河鼓二）與兩側的河鼓一、河鼓三排成一直線，俗稱「扁擔星」',
+      stars: [[19.8464, 8.8683, 0.76, '牛郎星'], [19.7710, 10.6133, 2.72], [19.9219, 6.4067, 3.71], [19.0902, 13.8633, 2.99], [19.4250, 3.1147, 3.36],
+        [20.1884, -0.8214, 3.26], [19.1041, -4.8825, 3.43], [19.8746, 1.0056, 3.87]],
+      lines: [[1, 0], [0, 2], [0, 4], [4, 6], [4, 3], [2, 7], [7, 5]] },
+    { id: 'lyr', season: 'summer', name: '天琴座', en: 'Lyra', color: '#d6c8ff', tip: '織女星（織女一）是夏季夜空最亮的星，旁邊的小平行四邊形就是織女的織布梭',
+      stars: [[18.6156, 38.7837, 0.03, '織女星'], [18.7390, 39.6700, 4.67], [18.7462, 37.6050, 4.36], [18.8347, 33.3627, 3.52], [18.9824, 32.6896, 3.25], [18.9084, 36.8986, 4.30]],
+      lines: [[0, 1], [0, 2], [1, 2], [2, 3], [3, 4], [4, 5], [5, 2]] },
+    { id: 'tri', season: 'summer', kind: 'asterism', name: '夏季大三角', en: 'Summer Triangle', color: '#fff1a8', tip: '星群（非正式星座）：牛郎星、織女星、天津四連成的大三角形，夏夜頭頂最好認',
+      stars: [[19.8464, 8.8683, 0.76, '牛郎星'], [18.6156, 38.7837, 0.03, '織女星'], [20.6905, 45.2803, 1.25, '天津四']],
+      lines: [[0, 1], [1, 2], [2, 0]] },
+
+    // ----- autumn -----
+    { id: 'peg', season: 'autumn', name: '飛馬座', en: 'Pegasus', color: '#8fd0ff', tip: '室宿一、室宿二、壁宿一與仙女座的壁宿二圍成「秋季四邊形」',
+      stars: [[23.0794, 15.2053, 2.48, '室宿一'], [23.0629, 28.0828, 2.42, '室宿二'], [0.2206, 15.1836, 2.83, '壁宿一'], [0.1398, 29.0904, 2.06, '壁宿二'], [21.7364, 9.8750, 2.39],
+        [22.6910, 10.8314, 3.40], [22.1700, 6.1978, 3.53], [22.7167, 30.2214, 2.94], [22.8334, 24.6017, 3.48], [22.7755, 23.5656, 3.95]],
+      lines: [[0, 1], [1, 3], [3, 2], [2, 0], [0, 5], [5, 6], [6, 4], [1, 7], [1, 8], [8, 9]] },
+    { id: 'and', season: 'autumn', name: '仙女座', en: 'Andromeda', color: '#ffb8e0', tip: '從秋季四邊形的壁宿二往東延伸；附近的仙女座星系（M31）是肉眼可見最遠的天體，約 250 萬光年',
+      stars: [[0.1398, 29.0904, 2.06, '壁宿二'], [0.6555, 30.8611, 3.27], [1.1622, 35.6206, 2.05, '奎宿九'], [2.0650, 42.3297, 2.10], [0.9459, 38.4994, 3.87],
+        [0.8302, 41.0789, 4.53], [0.7123, 41.2692, 3.44, '仙女座星系 M31']],
+      lines: [[0, 1], [1, 2], [2, 3], [2, 4], [4, 5]] },
+    { id: 'psa', season: 'autumn', name: '南魚座', en: 'Piscis Austrinus', color: '#8ff0e0', tip: '北落師門是秋季南方天空唯一的亮星，常被稱為「秋季的孤獨之星」',
+      stars: [[22.9608, -29.6222, 1.16, '北落師門'], [22.6776, -27.0436, 4.17], [22.9325, -32.5397, 4.21], [22.8754, -32.8756, 4.46], [22.5251, -32.3461, 4.29],
+        [21.7491, -33.0258, 4.35], [22.1397, -32.9883, 4.50], [21.7956, -30.8983, 5.00]],
+      lines: [[0, 1], [0, 2], [2, 3], [3, 4], [4, 6], [6, 5], [5, 7], [7, 1]] },
+    { id: 'psc', season: 'autumn', name: '雙魚座', en: 'Pisces', color: '#a8c8ff', tip: '黃道星座，星星都很暗；兩條魚以絲帶相連，結點是外屏七，春分點就在這一帶',
+      stars: [[23.2861, 3.2822, 3.69], [23.4489, 1.2556, 4.94], [23.7008, 1.7800, 4.49], [23.6658, 5.6264, 4.13], [23.4661, 6.3789, 4.27],
+        [23.9885, 6.8633, 4.01], [0.8114, 7.5850, 4.43], [1.0491, 7.8900, 4.27], [1.6905, 5.4875, 4.44], [2.0341, 2.7636, 3.82, '外屏七'],
+        [1.7566, 9.1578, 4.26], [1.5247, 15.3458, 3.62], [1.2291, 24.5839, 4.65], [1.3244, 27.2642, 4.74], [1.1943, 30.0897, 4.51]],
+      lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0], [3, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 13], [13, 14], [14, 12]] },
+    { id: 'aqr', season: 'autumn', name: '寶瓶座', en: 'Aquarius', color: '#7fc8ff', tip: '黃道星座；水瓶口的四顆星排成「Y」字，水流一路流向南魚座的北落師門',
+      stars: [[21.5260, -5.5711, 2.87, '虛宿一'], [22.0964, -0.3197, 2.94, '危宿一'], [22.9108, -15.8208, 3.27], [22.4805, -0.0200, 3.65], [22.3609, -1.3872, 3.84],
+        [22.5893, -0.1175, 4.04], [22.4213, 1.3775, 4.66], [20.7946, -9.4958, 3.77], [22.8769, -7.5797, 3.74], [22.8265, -13.5925, 4.00],
+        [22.2806, -7.7831, 4.16], [22.1073, -13.8697, 4.27], [23.1574, -21.1725, 3.66], [23.3828, -20.1006, 3.97]],
+      lines: [[7, 0], [0, 1], [1, 4], [4, 3], [3, 5], [3, 6], [1, 10], [10, 8], [8, 9], [9, 2], [2, 12], [12, 13], [0, 11]] },
+
+    // ----- winter -----
+    { id: 'cma', season: 'winter', name: '大犬座', en: 'Canis Major', color: '#c8e0ff', tip: '天狼星是全天最亮的恆星（−1.46 等），距離約 8.6 光年',
+      stars: [[6.7525, -16.7161, -1.46, '天狼星'], [6.9771, -28.9722, 1.50], [7.1399, -26.3932, 1.84], [6.3783, -17.9559, 1.98], [7.4016, -29.3031, 2.45],
+        [6.3386, -30.0634, 3.02], [7.0504, -23.8333, 3.02], [7.0626, -15.6331, 4.12], [6.9356, -17.0542, 4.37]],
+      lines: [[3, 0], [0, 8], [8, 7], [0, 6], [6, 2], [2, 1], [1, 5], [2, 4]] },
+    { id: 'cmi', season: 'winter', name: '小犬座', en: 'Canis Minor', color: '#ffe6b0', tip: '南河三與天狼星、參宿四組成「冬季大三角」',
+      stars: [[7.6550, 5.2250, 0.34, '南河三'], [7.4525, 8.2894, 2.90]],
+      lines: [[0, 1]] },
+    { id: 'aur', season: 'winter', name: '御夫座', en: 'Auriga', color: '#ffe89a', tip: '五車二是冬季頭頂的金黃亮星；五顆亮星圍成五邊形，其中五車五與金牛座共用',
+      stars: [[5.2782, 45.9980, 0.08, '五車二'], [5.9921, 44.9474, 1.90], [5.9954, 37.2125, 2.62], [5.4382, 28.6075, 1.65, '五車五'], [4.9499, 33.1661, 2.69],
+        [5.0328, 43.8233, 2.99], [5.1086, 41.2344, 3.17]],
+      lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0], [0, 5], [5, 6]] },
+
+    // ----- all year (circumpolar from Taiwan's latitude) -----
+    { id: 'umi', season: 'year', name: '小熊座', en: 'Ursa Minor', color: '#b0f0ff', tip: '北極星（勾陳一）就在小熊尾巴尖端，幾乎正對地球自轉軸，整夜不動',
+      stars: [[2.5303, 89.2641, 1.98, '北極星'], [17.5369, 86.5864, 4.35], [16.7662, 82.0372, 4.21], [15.7343, 77.7944, 4.29], [14.8451, 74.1555, 2.08, '帝星'],
+        [15.3455, 71.8340, 3.05], [16.2917, 75.7553, 4.95]],
+      lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 3]] },
+    { id: 'dra', season: 'year', name: '天龍座', en: 'Draco', color: '#b8ffb0', tip: '蜿蜒在大熊與小熊之間；右樞約 4,800 年前曾是北極星',
+      stars: [[17.9434, 51.4889, 2.23, '天棓四'], [17.5072, 52.3014, 2.79], [17.5378, 55.1842, 4.88], [17.8921, 56.8726, 3.75], [19.2093, 67.6617, 3.07],
+        [19.8029, 70.2678, 3.83], [18.3509, 72.7328, 3.57], [17.1464, 65.7147, 3.17], [16.3998, 61.5142, 2.73], [16.0315, 58.5653, 4.01],
+        [15.4155, 58.9661, 3.29], [14.0731, 64.3758, 3.65, '右樞'], [12.5580, 69.7883, 3.87], [11.5234, 69.3311, 3.84]],
+      lines: [[1, 0], [0, 3], [3, 2], [2, 1], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 13]] }
+  ];
+  const SEASONS = [
+    { id: 'spring', name: '春季', hint: '3–5 月晚上' },
+    { id: 'summer', name: '夏季', hint: '6–8 月晚上' },
+    { id: 'autumn', name: '秋季', hint: '9–11 月晚上' },
+    { id: 'winter', name: '冬季', hint: '12–2 月晚上' },
+    { id: 'year', name: '全年可見', hint: '北天拱極' }
   ];
   const CONST_R = 8000; // celestial sphere radius (planet orbits reach ~710 u)
   const OBLIQ = THREE.MathUtils.degToRad(23.4392911);
@@ -850,8 +942,13 @@ function boot(THREE) {
       });
       const lg = new THREE.BufferGeometry();
       lg.setAttribute('position', new THREE.BufferAttribute(lp, 3));
-      const lineMat = new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.5, depthWrite: false });
-      g.add(new THREE.LineSegments(lg, lineMat));
+      // asterisms (e.g. Summer Triangle) use dashed lines so they read differently from official constellations
+      const lineMat = c.kind === 'asterism'
+        ? new THREE.LineDashedMaterial({ color: col, dashSize: 110, gapSize: 70, transparent: true, opacity: 0.5, depthWrite: false })
+        : new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.5, depthWrite: false });
+      const segs = new THREE.LineSegments(lg, lineMat);
+      if (c.kind === 'asterism') segs.computeLineDistances();
+      g.add(segs);
       // stars in three brightness tiers (PointsMaterial keeps the renderer's log-depth handling)
       const tiers = [[-9, 1.5, 9], [1.5, 2.6, 6.5], [2.6, 9, 4.5]];
       const starMats = [];
@@ -1225,11 +1322,50 @@ function boot(THREE) {
     // ---------- Constellation UI ----------
     const constPanelEl = $('constPanel'), constListEl = $('constList'), constLabelsEl = $('constLabels');
     const constUI = { master: true, names: true, hi: null, fade: 1, dirty: true };
+    // Season groups (collapsible). Default: only the season matching today's evening sky is expanded.
+    const m0 = new Date().getMonth() + 1;
+    const nowSeason = m0 >= 3 && m0 <= 5 ? 'spring' : m0 >= 6 && m0 <= 8 ? 'summer' : m0 >= 9 && m0 <= 11 ? 'autumn' : 'winter';
+    const groups = SEASONS.map((S) => {
+      const items = consts.filter((c) => c.season === S.id);
+      const box = document.createElement('div');
+      box.className = 'cgroup' + (S.id === nowSeason ? '' : ' collapsed');
+      box.dataset.season = S.id;
+      const head = document.createElement('div');
+      head.className = 'cg-head';
+      const tog = document.createElement('button');
+      tog.className = 'cg-tog';
+      tog.innerHTML = `<span class="arrow">▶</span>${S.name}<span class="hint">${S.hint}</span><span class="cnt"></span>`;
+      tog.setAttribute('aria-expanded', String(S.id === nowSeason));
+      const all = document.createElement('button');
+      all.className = 'cg-all';
+      head.append(tog, all);
+      const body = document.createElement('div');
+      body.className = 'cg-body';
+      box.append(head, body);
+      constListEl.appendChild(box);
+      const grp = { S, items, box, body, tog, all };
+      tog.addEventListener('click', (e) => {
+        const open = box.classList.toggle('collapsed') === false;
+        tog.setAttribute('aria-expanded', String(open));
+        e.currentTarget.blur();
+      });
+      all.addEventListener('click', (e) => {
+        const on = !items.every((c) => c.shown);
+        for (const c of items) c.shown = on;
+        if (!on && constUI.hi && items.includes(constUI.hi)) constUI.hi = null;
+        if (on) constUI.master = true;
+        refreshConstUI();
+        toast(`${S.name}：${on ? '全部顯示' : '全部隱藏'}`);
+        e.currentTarget.blur();
+      });
+      return grp;
+    });
     for (const c of consts) {
+      const isAst = c.kind === 'asterism';
       const el = document.createElement('div');
       el.className = 'clabel';
       el.style.color = c.color;
-      el.innerHTML = `${c.name}<small>${c.en}</small>`;
+      el.innerHTML = `${c.name}<small>${isAst ? '星群・' : ''}${c.en}</small>`;
       constLabelsEl.appendChild(el);
       c.labelEl = el;
       c.stars.forEach((s, k) => {
@@ -1238,14 +1374,15 @@ function boot(THREE) {
         sl.className = 'clabel star';
         sl.textContent = s[3];
         constLabelsEl.appendChild(sl);
-        c.starLabels.push({ el: sl, dir: c.dirs[k] });
+        c.starLabels.push({ el: sl, dir: c.dirs[k], name: s[3] });
       });
       const row = document.createElement('div');
       row.className = 'crow';
+      row.dataset.id = c.id;
       const tog = document.createElement('button');
       tog.className = 'ctog on';
       tog.title = `顯示／隱藏${c.full || c.name}`;
-      tog.innerHTML = `<span class="d" style="background:${c.color};color:${c.color}"></span><span class="nm">${c.full || c.name}</span><span class="en">${c.en}</span><span class="st">顯示中</span>`;
+      tog.innerHTML = `<span class="d" style="background:${c.color};color:${c.color}"></span><span class="nm">${c.full || c.name}</span>${isAst ? '<span class="tag-ast">星群</span>' : ''}<span class="en">${c.en}</span><span class="st">顯示中</span>`;
       tog.addEventListener('click', (e) => { setConstShown(c, !c.shown); e.currentTarget.blur(); });
       const loc = document.createElement('button');
       loc.className = 'cloc';
@@ -1253,7 +1390,7 @@ function boot(THREE) {
       loc.title = `轉向並點亮${c.name}`;
       loc.addEventListener('click', (e) => { locateConst(c); e.currentTarget.blur(); });
       row.append(tog, loc);
-      constListEl.appendChild(row);
+      groups.find((g) => g.S.id === c.season).body.appendChild(row);
       c.togBtn = tog; c.locBtn = loc;
     }
     function refreshConstUI() {
@@ -1269,6 +1406,12 @@ function boot(THREE) {
         c.togBtn.querySelector('.st').textContent = c.shown ? (constUI.hi === c ? '點亮中' : '顯示中') : '已隱藏';
         c.locBtn.classList.toggle('on', constUI.hi === c);
         c.labelEl.classList.toggle('hi', constUI.hi === c);
+      }
+      for (const g of groups) {
+        const n = g.items.filter((c) => c.shown).length;
+        g.tog.querySelector('.cnt').textContent = `${n}/${g.items.length}`;
+        g.all.textContent = n === g.items.length ? '全隱' : '全顯';
+        g.all.title = `${g.S.name}：${n === g.items.length ? '全部隱藏' : '全部顯示'}`;
       }
     }
     function setConstMaster(on) {
@@ -1506,6 +1649,7 @@ function boot(THREE) {
     // Constellations: fade master on/off, apply highlight, place HTML labels (hidden where they would sit on top of UI panels)
     const blockers = [infoEl, constPanelEl, helpEl, $('stats'), $('topbar'), $('bodybar'), ...document.querySelectorAll('#touch .tgroup')];
     let blockRects = [], blockT = -1e9;
+    const starNameOwner = new Map();
     function blocked(x, y) {
       for (const r of blockRects) if (x > r.left - 60 && x < r.right + 60 && y > r.top - 14 && y < r.bottom + 14) return true;
       return false;
@@ -1548,10 +1692,20 @@ function boot(THREE) {
           if (r.width > 0 && r.height > 0) blockRects.push(r);
         }
       }
+      // Stars shared by several figures (壁宿二, 五車五, the Summer Triangle's three stars) get one label only:
+      // the brightest-rendered owner wins (highlighted figure first).
+      starNameOwner.clear();
+      for (const c of consts) {
+        if (!constUI.names || c.op < 0.02) continue;
+        for (const s of c.starLabels) {
+          const o = starNameOwner.get(s.name);
+          if (!o || c.op > o.op) starNameOwner.set(s.name, c);
+        }
+      }
       for (const c of consts) {
         placeConstLabel(c.labelEl, c.center, c.op, 'translate(-50%,-50%)');
         const so = constUI.names ? c.op * 0.85 : 0;
-        for (const s of c.starLabels) placeConstLabel(s.el, s.dir, so, 'translate(9px,-50%)');
+        for (const s of c.starLabels) placeConstLabel(s.el, s.dir, starNameOwner.get(s.name) === c ? so : 0, 'translate(9px,-50%)');
       }
     }
     function fmtDist(d) { return d >= 100 ? d.toFixed(0) : d.toFixed(1); }
