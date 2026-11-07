@@ -87,7 +87,7 @@ body.touch #bodybar{bottom:10px}
 #touch button.big{width:88px;height:88px;font-size:15px;border-color:rgba(108,198,255,.55)}
 #touch button.held{background:rgba(108,198,255,.35);border-color:#6cc6ff}
 #touch button.boost.held{background:rgba(255,179,107,.35);border-color:#ffb36b}
-#toast{position:absolute;left:50%;top:22px;transform:translate(-50%,-8px);padding:8px 16px;border-radius:10px;background:var(--panel-strong);border:1px solid var(--line);font-size:13px;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}
+#toast{width:max-content;max-width:calc(100vw - 32px);text-align:center;line-height:1.5;position:absolute;left:50%;top:22px;transform:translate(-50%,-8px);padding:8px 16px;border-radius:10px;background:var(--panel-strong);border:1px solid var(--line);font-size:13px;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 #crosshair{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border:1px solid rgba(160,210,255,.35);border-radius:50%;opacity:0;transition:opacity .3s}
 #crosshair.show{opacity:1}
@@ -98,7 +98,34 @@ body.touch #bodybar{bottom:10px}
 #loading .s{color:var(--muted);font-size:13px;letter-spacing:1px;min-height:18px;text-align:center;padding:0 20px;line-height:1.6}
 #loading .pb{width:240px;height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}
 #loading .pb i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3a8dff,#ffb36b);transition:width .2s}
+#constLabels{position:fixed;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+.clabel{position:absolute;left:0;top:0;white-space:nowrap;font-size:13px;letter-spacing:2px;color:#a9c8ff;text-shadow:0 0 6px #000,0 0 3px #000;will-change:transform,opacity;visibility:hidden}
+.clabel small{font-size:10px;letter-spacing:.5px;opacity:.7;margin-left:4px}
+.clabel.star{font-size:10.5px;letter-spacing:.5px;color:#d3dcee}
+.clabel.hi{font-weight:700;font-size:15px}
+#constPanel{position:absolute;left:16px;bottom:72px;width:340px;padding:14px 14px 12px;font-size:12.5px;max-height:calc(100vh - 330px);overflow-x:hidden;overflow-y:auto}
+/* touch devices: keep the list above the thrust / boost buttons so it never covers them */
+body.touch #constPanel{bottom:236px;max-height:max(170px,calc(100vh - 470px))}
+#constPanel h3{margin:0 0 10px;font-size:14px;letter-spacing:1px}
+#constPanel h3 span{font-size:11px;color:var(--muted);font-weight:400;letter-spacing:0;margin-left:6px}
+#constPanel .close{position:absolute;right:10px;top:9px;padding:2px 8px;font-size:14px}
+.cp-top{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.cp-top button{padding:6px 8px;font-size:12px}
+.crow{display:flex;gap:6px;margin-bottom:5px;min-width:0}
+.crow .ctog{flex:1;min-width:0;display:flex;align-items:center;gap:8px;text-align:left;min-height:36px;padding:6px 10px}
+.crow .ctog .d{width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 6px currentColor}
+.crow .ctog .nm{flex:none}
+.crow .ctog .en{color:var(--muted);font-size:11px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.crow .ctog .st{font-size:11px;color:#bfe6ff;flex:none}
+.crow .cloc{flex:none}
+.crow .ctog:not(.on){opacity:.5}
+.crow .ctog:not(.on) .d{background:transparent!important;border:1px solid currentColor}
+.crow .cloc{min-height:36px;padding:6px 10px;font-size:12px}
+#constPanel .note{margin-top:8px;color:var(--muted);font-size:11.5px;line-height:1.6}
+#constPanel.master-off .crow{opacity:.45}
 @media (max-width:860px){
+  #constPanel{width:auto;right:16px;max-height:50vh;bottom:120px}
+  body.touch #constPanel{left:12px;right:12px}
   #topbar{max-width:none;left:16px;right:16px;top:auto;bottom:62px;justify-content:center}
   body.touch #topbar{bottom:auto;top:auto}
   #stats{width:220px;padding:10px 12px}
@@ -118,6 +145,7 @@ body.touch #bodybar{bottom:10px}
 </head>
 <body>
 <div id="app"></div>
+<div id="constLabels"></div>
 <div id="labels"></div>
 
 <div id="hud">
@@ -142,7 +170,22 @@ body.touch #bodybar{bottom:10px}
     </div>
     <button id="btnShip" title="返回飛船（R）">返回飛船</button>
     <button id="btnView" title="自由視角／軌道總覽（M）">自由總覽</button>
+    <button id="btnConst" class="on" title="星座總開關（C）">✦ 星座</button>
+    <button id="btnConstList" title="星座清單（L）">☰</button>
     <button id="btnHelp" title="操作說明（H）">說明</button>
+  </div>
+
+  <div id="constPanel" class="panel interactive hidden">
+    <button class="close" id="constClose" title="關閉（L）">✕</button>
+    <h3>星座<span>真實恆星 J2000 座標</span></h3>
+    <div class="cp-top">
+      <button id="constMaster" class="on">✦ 總開關：開</button>
+      <button id="constAll">全部顯示</button>
+      <button id="constNone">全部隱藏</button>
+      <button id="constNames" class="on">亮星名</button>
+    </div>
+    <div id="constList"></div>
+    <div class="note">點星座名稱可單獨顯示／隱藏；「定位」會把視角轉向該星座並點亮它（再按一次取消點亮）。鍵盤 <kbd>C</kbd> 為總開關、<kbd>L</kbd> 開關此清單。</div>
   </div>
 
   <div id="info" class="panel interactive hidden"></div>
@@ -154,7 +197,7 @@ body.touch #bodybar{bottom:10px}
       <tr><td><kbd>W</kbd> / <kbd>S</kbd></td><td>向前推進 / 反向推進（煞車、後退）</td></tr>
       <tr><td><kbd>A</kbd> / <kbd>D</kbd></td><td>向左轉 / 向右轉</td></tr>
       <tr><td><kbd>Q</kbd> / <kbd>E</kbd></td><td>向左 / 向右平移</td></tr>
-      <tr><td><kbd>Space</kbd> / <kbd>C</kbd></td><td>上升 / 下降</td></tr>
+      <tr><td><kbd>Space</kbd> / <kbd>Z</kbd></td><td>上升 / 下降</td></tr>
       <tr><td><kbd>Shift</kbd></td><td>加速推進（Boost）</td></tr>
       <tr><td><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></td><td>機頭俯仰與轉向</td></tr>
       <tr><td>滑鼠拖曳</td><td>操控飛船方向；聚焦／總覽時旋轉視角</td></tr>
@@ -166,6 +209,8 @@ body.touch #bodybar{bottom:10px}
       <tr><td><kbd>T</kbd></td><td>切換時間倍率 1x → 10x → 100x</td></tr>
       <tr><td><kbd>R</kbd></td><td>返回飛船視角</td></tr>
       <tr><td><kbd>M</kbd></td><td>自由視角／軌道總覽</td></tr>
+      <tr><td><kbd>C</kbd></td><td>星座總開關（顯示／隱藏全部星座）</td></tr>
+      <tr><td><kbd>L</kbd></td><td>星座清單：單獨顯示／隱藏、定位點亮</td></tr>
       <tr><td><kbd>H</kbd> / <kbd>Esc</kbd></td><td>顯示／隱藏說明；關閉資訊面板</td></tr>
       <tr><td>觸控</td><td>拖曳轉向、雙指縮放，按住畫面按鈕推進／加速</td></tr>
     </table>
@@ -515,6 +560,52 @@ function boot(THREE) {
       info: { diameter: '3,474 公里', distance: '距地球平均 384,400 公里；與太陽平均距離約 1 AU（約 1 億 4,960 萬公里）', period: '繞地球 27.32 天（恆星月）', day: '27.32 天（被潮汐鎖定，自轉與公轉同步）',
         fact: '月球永遠以同一面朝向地球；它正以每年約 3.8 公分的速度逐漸遠離地球。' } }
   ];
+  // ---------- Constellations (J2000 RA in hours, Dec in degrees, visual magnitude, optional Chinese star name) ----------
+  const CONSTELLATIONS = [
+    { id: 'ori', name: '獵戶座', en: 'Orion', color: '#86bbff', tip: '冬季星空的代表，腰帶三星（參宿一、二、三）一字排開',
+      stars: [[5.9195, 7.4071, 0.50, '參宿四'], [5.2423, -8.2016, 0.13, '參宿七'], [5.4189, 6.3497, 1.64], [5.5334, -0.2991, 2.23],
+        [5.6036, -1.2019, 1.69], [5.6793, -1.9426, 1.77], [5.7959, -9.6696, 2.06], [5.5856, 9.9342, 3.39]],
+      lines: [[7, 0], [7, 2], [0, 2], [0, 5], [2, 3], [3, 4], [4, 5], [5, 6], [3, 1]] },
+    { id: 'uma', name: '北斗七星', full: '北斗七星（大熊座）', en: 'Big Dipper', color: '#9fe0c8', tip: '大熊座的一部分；天璇→天樞延長約 5 倍即可找到北極星',
+      stars: [[11.0621, 61.7510, 1.79, '天樞'], [11.0307, 56.3824, 2.37, '天璇'], [11.8972, 53.6948, 2.44, '天璣'], [12.2571, 57.0326, 3.31, '天權'],
+        [12.9005, 55.9598, 1.77, '玉衡'], [13.3988, 54.9254, 2.27, '開陽'], [13.7923, 49.3133, 1.86, '搖光']],
+      lines: [[0, 1], [1, 2], [2, 3], [3, 0], [3, 4], [4, 5], [5, 6]] },
+    { id: 'cas', name: '仙后座', en: 'Cassiopeia', color: '#f3a6d8', tip: '由五顆亮星排成醒目的 W 形，與北斗七星分居北極星兩側',
+      stars: [[0.1530, 59.1498, 2.27], [0.6751, 56.5373, 2.24, '王良四'], [0.9451, 60.7167, 2.47], [1.4303, 60.2353, 2.68], [1.9066, 63.6701, 3.37]],
+      lines: [[0, 1], [1, 2], [2, 3], [3, 4]] },
+    { id: 'gem', name: '雙子座', en: 'Gemini', color: '#ffd27a', tip: '黃道星座；北河二、北河三是一對「兄弟星」',
+      stars: [[7.5766, 31.8883, 1.58, '北河二'], [7.7553, 28.0262, 1.14, '北河三'], [6.6285, 16.3993, 1.93], [6.7322, 25.1311, 2.98], [6.3827, 22.5136, 2.87],
+        [6.2480, 22.5068, 3.31], [7.3354, 21.9822, 3.53], [7.0685, 20.5703, 3.90], [7.1857, 30.2453, 4.41]],
+      lines: [[0, 8], [8, 3], [3, 4], [4, 5], [1, 6], [6, 7], [7, 2], [0, 1], [8, 6]] },
+    { id: 'tau', name: '金牛座', en: 'Taurus', color: '#ffae7a', tip: '黃道星座；橙紅色的畢宿五是牛眼，昴宿星團就在牛背上',
+      stars: [[4.5987, 16.5093, 0.85, '畢宿五'], [5.4382, 28.6075, 1.65, '五車五'], [5.6274, 21.1425, 3.00], [4.3299, 15.6275, 3.65], [4.3823, 17.5425, 3.76],
+        [4.4769, 19.1803, 3.53], [4.4777, 15.8708, 3.40], [4.0113, 12.4903, 3.47], [3.7914, 24.1050, 2.87, '昴宿星團'], [3.4136, 9.0289, 3.60]],
+      lines: [[1, 5], [5, 4], [4, 3], [2, 0], [0, 6], [6, 3], [3, 7], [7, 9]] },
+    { id: 'leo', name: '獅子座', en: 'Leo', color: '#ffe08a', tip: '黃道星座；頭部的「反問號」又稱獅子的鐮刀',
+      stars: [[10.1395, 11.9672, 1.35, '軒轅十四'], [11.8177, 14.5720, 2.14, '五帝座一'], [10.3329, 19.8415, 2.08], [11.2351, 20.5237, 2.56], [11.2373, 15.4296, 3.33],
+        [10.1222, 16.7625, 3.48], [10.2782, 23.4173, 3.43], [9.8794, 26.0070, 3.88], [9.7642, 23.7743, 2.98]],
+      lines: [[0, 5], [5, 2], [2, 6], [6, 7], [7, 8], [2, 3], [3, 1], [1, 4], [4, 0], [3, 4]] },
+    { id: 'sco', name: '天蠍座', en: 'Scorpius', color: '#ff8a8a', tip: '黃道星座；紅超巨星心宿二是蠍子的心臟，夏季南方低空可見',
+      stars: [[16.4901, -26.4320, 1.06, '心宿二'], [16.0906, -19.8055, 2.62], [16.0056, -22.6217, 2.29], [15.9809, -26.1141, 2.89], [16.3531, -25.5928, 2.88],
+        [16.5980, -28.2161, 2.82], [16.8361, -34.2933, 2.29], [16.8645, -38.0475, 3.00], [16.9097, -42.3613, 3.62], [17.2026, -43.2392, 3.33],
+        [17.6220, -42.9978, 1.86], [17.7931, -40.1270, 3.00], [17.7081, -39.0300, 2.39], [17.5601, -37.1038, 1.62, '尾宿八'], [17.5127, -37.2958, 2.70]],
+      lines: [[1, 2], [2, 3], [2, 4], [4, 0], [0, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 13], [13, 14]] },
+    { id: 'cyg', name: '天鵝座', en: 'Cygnus', color: '#b8a8ff', tip: '又稱北十字；天津四與織女、牛郎合稱「夏季大三角」',
+      stars: [[20.6905, 45.2803, 1.25, '天津四'], [20.3705, 40.2567, 2.23], [19.5120, 27.9597, 3.05, '輦道增七'], [20.7702, 33.9703, 2.48], [19.7496, 45.1308, 2.87],
+        [21.2156, 30.2270, 3.20], [19.4951, 51.7297, 3.79], [19.9384, 35.0836, 3.89]],
+      lines: [[0, 1], [1, 7], [7, 2], [4, 1], [1, 3], [3, 5], [4, 6]] }
+  ];
+  const CONST_R = 8000; // celestial sphere radius (planet orbits reach ~710 u)
+  const OBLIQ = THREE.MathUtils.degToRad(23.4392911);
+  // Equatorial J2000 → ecliptic → scene axes (scene XZ plane = ecliptic, +Y = ecliptic north, longitude λ at (cos λ, 0, −sin λ))
+  function raDecToDir(raH, decDeg, out) {
+    const a = THREE.MathUtils.degToRad(raH * 15), d = THREE.MathUtils.degToRad(decDeg);
+    const xe = Math.cos(d) * Math.cos(a), ye = Math.cos(d) * Math.sin(a), ze = Math.sin(d);
+    const ce = Math.cos(OBLIQ), se = Math.sin(OBLIQ);
+    const yk = ye * ce + ze * se, zk = -ye * se + ze * ce;
+    return out.set(xe, zk, -yk).normalize();
+  }
+
   const distFor = (au) => 55 + 120 * Math.sqrt(au);
   const MOON_DIST = 6.2;
   const J2000 = Date.UTC(2000, 0, 1, 12, 0, 0);
@@ -744,6 +835,42 @@ function boot(THREE) {
       stars.add(sp);
     });
 
+    // ---------- Constellations ----------
+    // The group follows the camera (like the starfield), so the figures sit on an "infinitely far"
+    // celestial sphere: no parallax, no distortion no matter where the ship flies.
+    const constGroup = new THREE.Group();
+    scene.add(constGroup);
+    const consts = CONSTELLATIONS.map((c) => {
+      const col = new THREE.Color(c.color);
+      const dirs = c.stars.map((s) => raDecToDir(s[0], s[1], new V3()));
+      const g = new THREE.Group();
+      const lp = new Float32Array(c.lines.length * 6);
+      c.lines.forEach(([a, b], k) => {
+        lp.set([dirs[a].x * CONST_R, dirs[a].y * CONST_R, dirs[a].z * CONST_R, dirs[b].x * CONST_R, dirs[b].y * CONST_R, dirs[b].z * CONST_R], k * 6);
+      });
+      const lg = new THREE.BufferGeometry();
+      lg.setAttribute('position', new THREE.BufferAttribute(lp, 3));
+      const lineMat = new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.5, depthWrite: false });
+      g.add(new THREE.LineSegments(lg, lineMat));
+      // stars in three brightness tiers (PointsMaterial keeps the renderer's log-depth handling)
+      const tiers = [[-9, 1.5, 9], [1.5, 2.6, 6.5], [2.6, 9, 4.5]];
+      const starMats = [];
+      for (const [lo, hi, size] of tiers) {
+        const sel = dirs.filter((_, k) => c.stars[k][2] >= lo && c.stars[k][2] < hi);
+        if (!sel.length) continue;
+        const arr = new Float32Array(sel.length * 3);
+        sel.forEach((d, k) => arr.set([d.x * CONST_R, d.y * CONST_R, d.z * CONST_R], k * 3));
+        const pg = new THREE.BufferGeometry();
+        pg.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+        const m = new THREE.PointsMaterial({ size, sizeAttenuation: false, map: starDot, color: col.clone().lerp(new THREE.Color(1, 1, 1), 0.6), transparent: true, depthWrite: false });
+        starMats.push(m);
+        g.add(new THREE.Points(pg, m));
+      }
+      constGroup.add(g);
+      const center = dirs.reduce((s, d) => s.add(d), new V3()).normalize();
+      return { ...c, group: g, lineMat, starMats, dirs, center, shown: true, labelEl: null, starLabels: [] };
+    });
+
     // ---------- Spaceship ----------
     const shipObj = new THREE.Group();
     {
@@ -807,7 +934,7 @@ function boot(THREE) {
       simDays: (Date.now() - J2000) / 86400000,
       timeScale: 1, paused: false
     };
-    const ship = { obj: shipObj, pos: shipObj.position, vel: new V3(), yaw: 0, pitch: 0, roll: 0, steerRoll: 0, throttle: 0.2, boosting: false, speed: 0 };
+    const ship = { obj: shipObj, pos: shipObj.position, vel: new V3(), yaw: 0, pitch: 0, roll: 0, steerRoll: 0, throttle: 0.2, boosting: false, speed: 0, aim: null };
     const cam = { mode: 'ship', body: null, theta: 0, phi: 1.2, radius: 30, fly: null, look: new V3(), chaseScale: 1, chaseOffset: new V3(), up: new V3(0, 1, 0) };
     const keys = new Set();
     const touch = { thrust: false, boost: false, back: false, up: false, down: false };
@@ -863,9 +990,19 @@ function boot(THREE) {
       const turn = ((k('KeyA') || k('ArrowLeft')) ? 1 : 0) - ((k('KeyD') || k('ArrowRight')) ? 1 : 0);
       const pitchIn = (k('ArrowUp') ? 1 : 0) - (k('ArrowDown') ? 1 : 0);
       const strafe = (k('KeyE') ? 1 : 0) - (k('KeyQ') ? 1 : 0);
-      const vert = ((k('Space') || (active && touch.up)) ? 1 : 0) - ((k('KeyC') || (active && touch.down)) ? 1 : 0);
+      const vert = ((k('Space') || (active && touch.up)) ? 1 : 0) - ((k('KeyZ') || (active && touch.down)) ? 1 : 0);
       const boost = active && (keys.has('ShiftLeft') || keys.has('ShiftRight') || touch.boost);
 
+      if (ship.aim) {
+        if (!active || turn || pitchIn) ship.aim = null;
+        else {
+          const f = 1 - Math.exp(-3.5 * dt);
+          const dy = angDiff(ship.aim.yaw, ship.yaw), dp = ship.aim.pitch - ship.pitch;
+          ship.yaw += dy * f; ship.pitch += dp * f;
+          ship.steerRoll = clamp(ship.steerRoll + dy * f * 0.6, -0.8, 0.8);
+          if (Math.abs(dy) < 0.002 && Math.abs(dp) < 0.002) ship.aim = null;
+        }
+      }
       ship.yaw += turn * 1.5 * dt;
       ship.pitch = clamp(ship.pitch + pitchIn * 1.1 * dt, -1.35, 1.35);
       ship.steerRoll *= Math.exp(-5 * dt);
@@ -962,9 +1099,9 @@ function boot(THREE) {
     // ---------- UI ----------
     const infoEl = $('info'), helpEl = $('help'), toastEl = $('toast');
     let toastTimer = 0;
-    function toast(msg) {
+    function toast(msg, ms) {
       toastEl.textContent = msg; toastEl.classList.add('show');
-      clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1600);
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms || 1600);
     }
     function orbGradient(c) { return `radial-gradient(circle at 35% 35%, #ffffff 0%, ${c} 35%, #0a0f1e 100%)`; }
     function showInfo(b) {
@@ -1055,6 +1192,7 @@ function boot(THREE) {
       const show = force !== undefined ? force : helpEl.classList.contains('hidden');
       helpEl.classList.toggle('hidden', !show);
       $('btnHelp').classList.toggle('on', show);
+      if (show) toggleConstPanel(false);
     }
 
     $('btnPause').addEventListener('click', (e) => { togglePause(); e.currentTarget.blur(); });
@@ -1083,13 +1221,112 @@ function boot(THREE) {
     shipLabel.className = 'label ship';
     shipLabel.innerHTML = '<span class="dot" style="background:#ffb36b;color:#ffb36b"></span>我的飛船';
     labelsEl.appendChild(shipLabel);
+
+    // ---------- Constellation UI ----------
+    const constPanelEl = $('constPanel'), constListEl = $('constList'), constLabelsEl = $('constLabels');
+    const constUI = { master: true, names: true, hi: null, fade: 1, dirty: true };
+    for (const c of consts) {
+      const el = document.createElement('div');
+      el.className = 'clabel';
+      el.style.color = c.color;
+      el.innerHTML = `${c.name}<small>${c.en}</small>`;
+      constLabelsEl.appendChild(el);
+      c.labelEl = el;
+      c.stars.forEach((s, k) => {
+        if (!s[3]) return;
+        const sl = document.createElement('div');
+        sl.className = 'clabel star';
+        sl.textContent = s[3];
+        constLabelsEl.appendChild(sl);
+        c.starLabels.push({ el: sl, dir: c.dirs[k] });
+      });
+      const row = document.createElement('div');
+      row.className = 'crow';
+      const tog = document.createElement('button');
+      tog.className = 'ctog on';
+      tog.title = `顯示／隱藏${c.full || c.name}`;
+      tog.innerHTML = `<span class="d" style="background:${c.color};color:${c.color}"></span><span class="nm">${c.full || c.name}</span><span class="en">${c.en}</span><span class="st">顯示中</span>`;
+      tog.addEventListener('click', (e) => { setConstShown(c, !c.shown); e.currentTarget.blur(); });
+      const loc = document.createElement('button');
+      loc.className = 'cloc';
+      loc.textContent = '定位';
+      loc.title = `轉向並點亮${c.name}`;
+      loc.addEventListener('click', (e) => { locateConst(c); e.currentTarget.blur(); });
+      row.append(tog, loc);
+      constListEl.appendChild(row);
+      c.togBtn = tog; c.locBtn = loc;
+    }
+    function refreshConstUI() {
+      constUI.dirty = true;
+      $('btnConst').classList.toggle('on', constUI.master);
+      const mb = $('constMaster');
+      mb.classList.toggle('on', constUI.master);
+      mb.textContent = constUI.master ? '✦ 總開關：開' : '✦ 總開關：關';
+      constPanelEl.classList.toggle('master-off', !constUI.master);
+      $('constNames').classList.toggle('on', constUI.names);
+      for (const c of consts) {
+        c.togBtn.classList.toggle('on', c.shown);
+        c.togBtn.querySelector('.st').textContent = c.shown ? (constUI.hi === c ? '點亮中' : '顯示中') : '已隱藏';
+        c.locBtn.classList.toggle('on', constUI.hi === c);
+        c.labelEl.classList.toggle('hi', constUI.hi === c);
+      }
+    }
+    function setConstMaster(on) {
+      constUI.master = on;
+      refreshConstUI();
+      toast(on ? '星座：顯示' : '星座：隱藏');
+    }
+    function setConstShown(c, on) {
+      c.shown = on;
+      if (!on && constUI.hi === c) constUI.hi = null;
+      if (on && !constUI.master) constUI.master = true;
+      refreshConstUI();
+      toast(`${c.name}：${on ? '顯示' : '隱藏'}`);
+    }
+    function setAllConst(on) {
+      for (const c of consts) c.shown = on;
+      if (!on) constUI.hi = null;
+      if (on) constUI.master = true;
+      refreshConstUI();
+      toast(on ? '已顯示全部星座' : '已隱藏全部星座');
+    }
+    function locateConst(c) {
+      if (constUI.hi === c) { constUI.hi = null; refreshConstUI(); toast(`取消點亮${c.name}`); return; }
+      constUI.hi = c; c.shown = true; constUI.master = true;
+      refreshConstUI();
+      const d = c.center;
+      if (cam.mode === 'ship') {
+        ship.aim = { yaw: Math.atan2(-d.x, -d.z), pitch: clamp(Math.asin(clamp(d.y, -1, 1)), -1.35, 1.35) };
+      } else {
+        // orbit camera looks at its target; put the camera on the opposite side so the constellation is behind it
+        cam.theta = Math.atan2(-d.x, -d.z);
+        cam.phi = clamp(Math.acos(clamp(-d.y, -1, 1)), 0.05, Math.PI - 0.05);
+        startFly();
+      }
+      toast(`${c.name}：${c.tip}`, 3200);
+    }
+    function toggleConstPanel(force) {
+      const show = force !== undefined ? force : constPanelEl.classList.contains('hidden');
+      constPanelEl.classList.toggle('hidden', !show);
+      $('btnConstList').classList.toggle('on', show);
+      if (show && !helpEl.classList.contains('hidden')) toggleHelp(false);
+    }
+    $('btnConst').addEventListener('click', (e) => { setConstMaster(!constUI.master); e.currentTarget.blur(); });
+    $('btnConstList').addEventListener('click', (e) => { toggleConstPanel(); e.currentTarget.blur(); });
+    $('constClose').addEventListener('click', () => toggleConstPanel(false));
+    $('constMaster').addEventListener('click', (e) => { setConstMaster(!constUI.master); e.currentTarget.blur(); });
+    $('constAll').addEventListener('click', (e) => { setAllConst(true); e.currentTarget.blur(); });
+    $('constNone').addEventListener('click', (e) => { setAllConst(false); e.currentTarget.blur(); });
+    $('constNames').addEventListener('click', (e) => { constUI.names = !constUI.names; refreshConstUI(); e.currentTarget.blur(); });
+    refreshConstUI();
+
     updateModeUI(); updateTimeUI();
     if (window.matchMedia('(pointer: coarse)').matches) { document.body.classList.add('touch'); toggleHelp(false); }
     else toggleHelp(true);
 
     // ---------- Input ----------
-    const MOVE_KEYS = new Set(['KeyW', 'KeyS', 'KeyA', 'KeyD', 'KeyQ', 'KeyE', 'KeyC', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight']);
-    const RETURN_KEYS = new Set(['KeyW', 'KeyS', 'KeyA', 'KeyD', 'KeyQ', 'KeyE', 'KeyC', 'Space']);
+    const MOVE_KEYS = new Set(['KeyW', 'KeyS', 'KeyA', 'KeyD', 'KeyQ', 'KeyE', 'KeyZ', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight']);
+    const RETURN_KEYS = new Set(['KeyW', 'KeyS', 'KeyA', 'KeyD', 'KeyQ', 'KeyE', 'KeyZ', 'Space']);
     window.addEventListener('keydown', (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const c = e.code;
@@ -1108,7 +1345,13 @@ function boot(THREE) {
         case 'KeyR': returnToShip(); break;
         case 'KeyM': toggleOverview(); break;
         case 'KeyH': toggleHelp(); break;
-        case 'Escape': if (!infoEl.classList.contains('hidden')) closeInfo(); else if (!helpEl.classList.contains('hidden')) toggleHelp(false); break;
+        case 'KeyC': setConstMaster(!constUI.master); break;
+        case 'KeyL': toggleConstPanel(); break;
+        case 'Escape':
+          if (!infoEl.classList.contains('hidden')) closeInfo();
+          else if (!constPanelEl.classList.contains('hidden')) toggleConstPanel(false);
+          else if (!helpEl.classList.contains('hidden')) toggleHelp(false);
+          break;
         default: return;
       }
       e.preventDefault();
@@ -1164,6 +1407,7 @@ function boot(THREE) {
     function steer(dx, dy, isTouch) {
       const k = isTouch ? 1.4 : 1;
       if (cam.mode === 'ship') {
+        ship.aim = null;
         ship.yaw -= dx * 0.0035 * k;
         ship.pitch = clamp(ship.pitch - dy * 0.0035 * k, -1.35, 1.35);
         ship.steerRoll = clamp(ship.steerRoll + dx * 0.012, -0.8, 0.8);
@@ -1177,7 +1421,8 @@ function boot(THREE) {
       if (e.pointerType === 'touch') document.body.classList.add('touch');
       try { canvas.setPointerCapture(e.pointerId); } catch (_) { /* capture unsupported */ }
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pointers.size === 1) drag = { x: e.clientX, y: e.clientY, t: performance.now(), moved: 0, touch: e.pointerType === 'touch' };
+      // e.timeStamp = when the press actually happened, so a slow frame between down/up can't turn a tap into a "long press"
+      if (pointers.size === 1) drag = { x: e.clientX, y: e.clientY, t: e.timeStamp, moved: 0, touch: e.pointerType === 'touch' };
       else if (pointers.size === 2) { pinch = pinchDist(); if (drag) drag.moved = 999; }
       canvas.classList.add('dragging');
     });
@@ -1203,7 +1448,7 @@ function boot(THREE) {
       if (!pointers.has(e.pointerId)) return;
       pointers.delete(e.pointerId);
       if (pointers.size === 0) {
-        if (drag && drag.moved < 6 && performance.now() - drag.t < 600 && e.type === 'pointerup') {
+        if (drag && drag.moved < 6 && e.timeStamp - drag.t < 600 && e.type === 'pointerup') {
           const b = pickAt(e.clientX, e.clientY);
           if (b) focusBody(b);
         }
@@ -1211,7 +1456,7 @@ function boot(THREE) {
         canvas.classList.remove('dragging');
       } else if (pointers.size === 1) {
         const p = [...pointers.values()][0];
-        drag = { x: p.x, y: p.y, t: performance.now(), moved: 999, touch: true };
+        drag = { x: p.x, y: p.y, t: e.timeStamp, moved: 999, touch: true };
       }
     }
     canvas.addEventListener('pointerup', endPointer);
@@ -1258,6 +1503,57 @@ function boot(THREE) {
       dustGeo.attributes.position.needsUpdate = true;
       dustMat.opacity = cam.mode === 'ship' ? clamp(ship.speed / 40, 0.12, 0.75) : 0;
     }
+    // Constellations: fade master on/off, apply highlight, place HTML labels (hidden where they would sit on top of UI panels)
+    const blockers = [infoEl, constPanelEl, helpEl, $('stats'), $('topbar'), $('bodybar'), ...document.querySelectorAll('#touch .tgroup')];
+    let blockRects = [], blockT = -1e9;
+    function blocked(x, y) {
+      for (const r of blockRects) if (x > r.left - 60 && x < r.right + 60 && y > r.top - 14 && y < r.bottom + 14) return true;
+      return false;
+    }
+    function hideEl(el) { if (el.style.visibility !== 'hidden') el.style.visibility = 'hidden'; }
+    function placeConstLabel(el, dir, opacity, anchor) {
+      if (opacity < 0.02) { hideEl(el); return; }
+      pv.copy(dir).multiplyScalar(CONST_R).add(camera.position).project(camera);
+      if (pv.z > 1 || pv.z < -1 || Math.abs(pv.x) > 1.05 || Math.abs(pv.y) > 1.05) { hideEl(el); return; }
+      const x = (pv.x * 0.5 + 0.5) * window.innerWidth, y = (-pv.y * 0.5 + 0.5) * window.innerHeight;
+      if (blocked(x, y)) { hideEl(el); return; }
+      el.style.visibility = 'visible';
+      el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) ${anchor}`;
+      el.style.opacity = opacity.toFixed(2);
+    }
+    function updateConstellations(dt, now) {
+      constGroup.position.copy(camera.position);
+      const target = constUI.master ? 1 : 0;
+      if (constUI.fade !== target) {
+        constUI.fade = Math.abs(target - constUI.fade) < 0.02 ? target : lerp(constUI.fade, target, 1 - Math.exp(-9 * dt));
+        constUI.dirty = true;
+      }
+      const f = constUI.fade, hi = constUI.hi;
+      if (constUI.dirty) {
+        constUI.dirty = false;
+        for (const c of consts) {
+          const k = hi ? (hi === c ? 1 : 0.3) : 0.75;
+          c.group.visible = c.shown && f > 0.01;
+          c.lineMat.opacity = f * k * (hi === c ? 0.95 : 0.6);
+          for (const m of c.starMats) m.opacity = f * Math.min(1, k + 0.25);
+          c.op = c.shown ? f * k : 0;
+        }
+      }
+      if (now - blockT > 250) {
+        blockT = now;
+        blockRects = [];
+        for (const el of blockers) {
+          if (el.classList.contains('hidden')) continue;
+          const r = el.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0) blockRects.push(r);
+        }
+      }
+      for (const c of consts) {
+        placeConstLabel(c.labelEl, c.center, c.op, 'translate(-50%,-50%)');
+        const so = constUI.names ? c.op * 0.85 : 0;
+        for (const s of c.starLabels) placeConstLabel(s.el, s.dir, so, 'translate(9px,-50%)');
+      }
+    }
     function fmtDist(d) { return d >= 100 ? d.toFixed(0) : d.toFixed(1); }
     let hudT = 0;
     function updateHUD(now) {
@@ -1300,6 +1596,7 @@ function boot(THREE) {
       const pulse = 1 + Math.sin(elapsed * 1.3) * 0.025 + Math.sin(elapsed * 3.1) * 0.012;
       sg1.scale.setScalar(24 * 6.2 * pulse);
       stars.position.copy(camera.position);
+      updateConstellations(dt, now);
       updateDust();
       updateLabels();
       updateHUD(now);
